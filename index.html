@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Davi-Token System v1.0</title>
+    <style>
+        body {
+            background-color: #1a1a2e;
+            color: #e94560;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            text-align: center;
+            padding: 50px;
+        }
+        .container {
+            background-color: #16213e;
+            border: 3px solid #0f3460;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 0 20px rgba(233, 69, 96, 0.3);
+            display: inline-block;
+        }
+        h1 { color: #00d2ff; text-shadow: 2px 2px #000; }
+        .token-display {
+            font-size: 50px;
+            margin: 20px;
+            color: #ffd700;
+            text-shadow: 0 0 10px #ffd700;
+        }
+        button {
+            background-color: #0f3460;
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            margin: 10px;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        button:hover { background-color: #e94560; transform: scale(1.1); }
+        .btn-add { border: 2px solid #00ff00; }
+        .btn-remove { border: 2px solid #ff0000; }
+        .status { margin-top: 20px; font-style: italic; color: #888; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>🪙 DAVI-TOKEN HUB 🪙</h1>
+        
+        <div class="status">Saldo Atual:</div>
+        <div id="tokenCount" class="token-display">0</div>
+
+        <div class="controls">
+            <button class="btn-add" onclick="alterarTokens(1)">➕ ADICIONAR TOKEN</button>
+            <button class="btn-remove" onclick="alterarTokens(-1)">➖ USAR TOKEN</button>
+            <br>
+            <button onclick="verInfo()">🔍 VER DETALHES</button>
+            <button onclick="resetar()" style="color: #ff4d4d;">⚠️ RESET TOTAL</button>
+        </div>
+
+        <p id="msg" style="margin-top: 15px; color: #fff;"></p>
+    </div>
+
+    <script>
+        // Sistema de Memória (Firebase simplificado ou LocalStorage)
+        let tokens = localStorage.getItem('daviTokens') ? parseInt(localStorage.getItem('daviTokens')) : 0;
+        atualizarTela();
+
+        function alterarTokens(valor) {
+            if (valor < 0 && tokens <= 0) {
+                document.getElementById('msg').innerText = "❌ Sem saldo para usar!";
+                return;
+            }
+            tokens += valor;
+            salvar();
+            atualizarTela();
+            document.getElementById('msg').innerText = valor > 0 ? "✅ Token Gerado!" : "💸 Token Gasto!";
+        }
+
+        function verInfo() {
+            alert("Davi-Ecosystem Info:\nTokens: " + tokens + "\nStatus: Owner Logado\nRede: Segura");
+        }
+
+        function resetar() {
+            if(confirm("Deseja ZERAR o banco de dados do Owner?")) {
+                tokens = 0;
+                salvar();
+                atualizarTela();
+                document.getElementById('msg').innerText = "🧹 Sistema Limpo!";
+            }
+        }
+
+        function salvar() {
+            localStorage.setItem('daviTokens', tokens);
+        }
+
+        function atualizarTela() {
+            document.getElementById('tokenCount').innerText = tokens;
+        }
+    </script>
+</body>
+</html>
