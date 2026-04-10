@@ -3,102 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Davi-Token System v1.0</title>
+    <title>Davi-Token Factory v3.0</title>
     <style>
-        body {
-            background-color: #1a1a2e;
-            color: #e94560;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            text-align: center;
-            padding: 50px;
-        }
-        .container {
-            background-color: #16213e;
-            border: 3px solid #0f3460;
-            border-radius: 20px;
-            padding: 20px;
-            box-shadow: 0 0 20px rgba(233, 69, 96, 0.3);
-            display: inline-block;
-        }
-        h1 { color: #00d2ff; text-shadow: 2px 2px #000; }
-        .token-display {
-            font-size: 50px;
-            margin: 20px;
-            color: #ffd700;
-            text-shadow: 0 0 10px #ffd700;
-        }
-        button {
-            background-color: #0f3460;
-            color: white;
-            border: none;
-            padding: 15px 25px;
-            margin: 10px;
-            border-radius: 10px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-        button:hover { background-color: #e94560; transform: scale(1.1); }
-        .btn-add { border: 2px solid #00ff00; }
-        .btn-remove { border: 2px solid #ff0000; }
-        .status { margin-top: 20px; font-style: italic; color: #888; }
+        body { background-color: #0d1117; color: #c9d1d9; font-family: 'Segoe UI', sans-serif; text-align: center; padding: 20px; }
+        .container { background-color: #161b22; border: 2px solid #30363d; border-radius: 15px; padding: 20px; max-width: 450px; display: inline-block; box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
+        h1 { color: #58a6ff; }
+        .inventory { text-align: left; background: #0d1117; padding: 15px; border-radius: 10px; margin: 20px 0; max-height: 200px; overflow-y: auto; }
+        .token-item { display: flex; justify-content: space-between; margin: 10px 0; font-size: 18px; padding-bottom: 5px; border-bottom: 1px solid #30363d; }
+        .controls, .factory { background: #21262d; padding: 15px; border-radius: 10px; margin-top: 10px; }
+        input, select, button { padding: 10px; border-radius: 8px; border: 1px solid #30363d; margin: 5px; font-weight: bold; }
+        input, select { background: #0d1117; color: white; width: 80%; }
+        button { cursor: pointer; transition: 0.2s; }
+        .btn-add { background: #238636; color: white; }
+        .btn-del { background: #da3633; color: white; }
+        .btn-create { background: #8957e5; color: white; width: 90%; }
+        .delete-token { color: #ff7b72; cursor: pointer; font-size: 12px; margin-left: 10px; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h1>🪙 DAVI-TOKEN HUB 🪙</h1>
+        <h1>🏗️ DAVI TOKEN FACTORY 🏗️</h1>
         
-        <div class="status">Saldo Atual:</div>
-        <div id="tokenCount" class="token-display">0</div>
+        <div class="inventory" id="inventoryList">
+            </div>
 
-        <div class="controls">
-            <button class="btn-add" onclick="alterarTokens(1)">➕ ADICIONAR TOKEN</button>
-            <button class="btn-remove" onclick="alterarTokens(-1)">➖ USAR TOKEN</button>
-            <br>
-            <button onclick="verInfo()">🔍 VER DETALHES</button>
-            <button onclick="resetar()" style="color: #ff4d4d;">⚠️ RESET TOTAL</button>
+        <div class="factory">
+            <h3>🔨 Criar Novo Tipo</h3>
+            <input type="text" id="newTokenName" placeholder="Nome do Token (ex: Ultra Token)">
+            <button class="btn-create" onclick="createToken()">FORJAR NOVO TOKEN</button>
         </div>
 
-        <p id="msg" style="margin-top: 15px; color: #fff;"></p>
+        <div class="controls">
+            <h3>🕹️ Painel de Controle</h3>
+            <select id="tokenSelector">
+                </select>
+            <br>
+            <button class="btn-add" onclick="updateAmount(1)">➕ ADICIONAR</button>
+            <button class="btn-del" onclick="updateAmount(-1)">➖ REMOVER</button>
+        </div>
+        
+        <button onclick="resetSystem()" style="background:none; border:none; color:#58a6ff; font-size:10px; margin-top:20px; cursor:pointer;">[ Resetar Banco de Dados ]</button>
     </div>
 
     <script>
-        // Sistema de Memória (Firebase simplificado ou LocalStorage)
-        let tokens = localStorage.getItem('daviTokens') ? parseInt(localStorage.getItem('daviTokens')) : 0;
-        atualizarTela();
+        // Banco de Dados Dinâmico
+        let wallet = JSON.parse(localStorage.getItem('daviFactory')) || {
+            "Swap Token": 0,
+            "Admin Token": 0
+        };
 
-        function alterarTokens(valor) {
-            if (valor < 0 && tokens <= 0) {
-                document.getElementById('msg').innerText = "❌ Sem saldo para usar!";
-                return;
+        function refreshUI() {
+            const list = document.getElementById('inventoryList');
+            const selector = document.getElementById('tokenSelector');
+            list.innerHTML = '';
+            selector.innerHTML = '';
+
+            for (let token in wallet) {
+                // Atualiza Lista
+                list.innerHTML += `
+                    <div class="token-item">
+                        <span>🪙 ${token}: <b>${wallet[token]}</b></span>
+                        <span class="delete-token" onclick="deleteTokenType('${token}')">[X] Deletar Tipo</span>
+                    </div>`;
+                
+                // Atualiza Selector
+                let option = document.createElement('option');
+                option.value = token;
+                option.innerText = token;
+                selector.appendChild(option);
             }
-            tokens += valor;
-            salvar();
-            atualizarTela();
-            document.getElementById('msg').innerText = valor > 0 ? "✅ Token Gerado!" : "💸 Token Gasto!";
+            save();
         }
 
-        function verInfo() {
-            alert("Davi-Ecosystem Info:\nTokens: " + tokens + "\nStatus: Owner Logado\nRede: Segura");
+        function createToken() {
+            const name = document.getElementById('newTokenName').value.trim();
+            if (name === "") return alert("Digite um nome!");
+            if (wallet[name] !== undefined) return alert("Esse token já existe!");
+            
+            wallet[name] = 0;
+            document.getElementById('newTokenName').value = "";
+            refreshUI();
         }
 
-        function resetar() {
-            if(confirm("Deseja ZERAR o banco de dados do Owner?")) {
-                tokens = 0;
-                salvar();
-                atualizarTela();
-                document.getElementById('msg').innerText = "🧹 Sistema Limpo!";
+        function updateAmount(amt) {
+            const selected = document.getElementById('tokenSelector').value;
+            if (!selected) return;
+            if (amt < 0 && wallet[selected] <= 0) return alert("Saldo insuficiente!");
+            
+            wallet[selected] += amt;
+            refreshUI();
+        }
+
+        function deleteTokenType(token) {
+            if (confirm(`Deseja EXCLUIR permanentemente o tipo "${token}"?`)) {
+                delete wallet[token];
+                refreshUI();
             }
         }
 
-        function salvar() {
-            localStorage.setItem('daviTokens', tokens);
-        }
+        function save() { localStorage.setItem('daviFactory', JSON.stringify(wallet)); }
+        function resetSystem() { if(confirm("Zerar tudo?")) { wallet = {"Swap Token":0}; refreshUI(); } }
 
-        function atualizarTela() {
-            document.getElementById('tokenCount').innerText = tokens;
-        }
+        refreshUI(); // Inicia o sistema
     </script>
 </body>
 </html>
